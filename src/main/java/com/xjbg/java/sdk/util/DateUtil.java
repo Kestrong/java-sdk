@@ -1,13 +1,11 @@
 package com.xjbg.java.sdk.util;
 
 import com.xjbg.java.sdk.enums.DatePatternEnum;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.*;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 import java.text.Format;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,53 +19,43 @@ import java.util.List;
 public final class DateUtil {
     private static final int[] CHINESE_WEEK = new int[]{0, 7, 1, 2, 3, 4, 5, 6};
 
-    public static String formatDate(Date date, String pattern) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.toString(pattern);
-    }
-
-    public static String formatDate(Date date, DatePatternEnum datePatternEnum) {
-        return formatDate(date, datePatternEnum.getFormat());
-    }
-
-    public static Date formatDate(Date time) {
-        DateTime dateTime = new DateTime(time);
-        DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(DatePatternEnum.YYYYMMDDHHMMSS_BYSEP.getFormat());
-        return dateTimeFormatter.parseDateTime(dateTime.toString(DatePatternEnum.YYYYMMDDHHMMSS_BYSEP.getFormat())).toDate();
-    }
 
     public static long getCurrentTimestamp() {
         return System.currentTimeMillis();
     }
 
     public static Date parseDateTime(String dateTime) {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern(DatePatternEnum.YYYYMMDDHHMMSS_BYSEP.getFormat());
-        return dateTimeFormatter.parseDateTime(dateTime).toDate();
+        return parse(dateTime, DatePatternEnum.YYYYMMDDHHMMSS_BYSEP);
     }
 
     public static Date parseDate(String date) {
-        DateTimeFormatter dateFormatter = DateTimeFormat.forPattern(DatePatternEnum.YYYYMMDD_BYSEP.getFormat());
+        return parse(date, DatePatternEnum.YYYYMMDD_BYSEP);
+    }
+
+    public static Date parse(String date, DatePatternEnum pattern) {
+        return parse(date, pattern.getFormat());
+    }
+
+    public static Date parse(String date, String pattern) {
+        DateTimeFormatter dateFormatter = DateTimeFormat.forPattern(pattern);
         return dateFormatter.parseDateTime(date).toDate();
     }
 
-    public static String formatDateTime(long timestamp) {
-        DateTime dateTime = new DateTime(timestamp);
-        return dateTime.toString(DatePatternEnum.YYYYMMDDHHMMSS_BYSEP.getFormat());
+    public static String format(Date date, String pattern) {
+        DateTime dateTime = new DateTime(date);
+        return dateTime.toString(pattern);
+    }
+
+    public static String format(Date date, DatePatternEnum datePatternEnum) {
+        return format(date, datePatternEnum.getFormat());
     }
 
     public static String formatDateTime(Date date) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.toString(DatePatternEnum.YYYYMMDDHHMMSS_BYSEP.getFormat());
+        return format(date, DatePatternEnum.YYYYMMDDHHMMSS_BYSEP);
     }
 
-    public static String getDateWithoutMinus(Date date) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.toString(DatePatternEnum.YYYYMMDD.getFormat());
-    }
-
-    public static String getTimeWithoutDate(Date date) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.toString(DatePatternEnum.HHMM_BYSEP.getFormat());
+    public static String formatDate(Date date) {
+        return format(date, DatePatternEnum.YYYYMMDD_BYSEP);
     }
 
     public static Date getMinDate(Date date) {
@@ -117,18 +105,6 @@ public final class DateUtil {
 
     public static boolean after(Date start, Date end) {
         return !before(start, end);
-    }
-
-    public static Date buildDateTime(Date date, String time) {
-        String[] hourAndMinuteArray = StringUtils.split(time, StringUtil.COLON);
-        Integer hour = Integer.parseInt(hourAndMinuteArray[0]);
-        Integer minute = Integer.parseInt(hourAndMinuteArray[1]);
-        return buildDateTime(date, hour, minute, 0, 0);
-    }
-
-    public static Date buildDateTime(Date date, Integer hour, Integer minute, Integer second, Integer millis) {
-        DateTime dateTime = (new DateTime(date)).hourOfDay().setCopy(hour).minuteOfHour().setCopy(minute).secondOfMinute().setCopy(second).millisOfSecond().setCopy(millis);
-        return dateTime.toDate();
     }
 
     public static String getMonthWithMaxDate(Date date) {
@@ -182,6 +158,11 @@ public final class DateUtil {
         return (new DateTime(date)).plusDays(amount).toDate();
     }
 
+    public static Date addWeek(Date date, int amount) {
+        return (new DateTime(date)).plusWeeks(amount).toDate();
+    }
+
+
     public static Date addMonth(Date date, int amount) {
         return (new DateTime(date)).plusMonths(amount).toDate();
     }
@@ -190,8 +171,42 @@ public final class DateUtil {
         return (new DateTime(date)).plusYears(amount).toDate();
     }
 
+    public static Date minusMilliSecond(Date date, int amount) {
+        return (new DateTime(date)).minusMillis(amount).toDate();
+    }
+
+    public static Date minusSecond(Date date, int amount) {
+        return (new DateTime(date)).minusSeconds(amount).toDate();
+    }
+
+    public static Date minusMinute(Date date, int amount) {
+        return (new DateTime(date)).minusMinutes(amount).toDate();
+    }
+
+    public static Date minusHour(Date date, int amount) {
+        return (new DateTime(date)).minusHours(amount).toDate();
+    }
+
+    public static Date minusDay(Date date, int amount) {
+        return (new DateTime(date)).minusDays(amount).toDate();
+    }
+
+    public static Date minusWeek(Date date, int amount) {
+        return (new DateTime(date)).minusWeeks(amount).toDate();
+    }
+
+
+    public static Date minusMonth(Date date, int amount) {
+        return (new DateTime(date)).minusMonths(amount).toDate();
+    }
+
+    public static Date minusYear(Date date, int amount) {
+        return (new DateTime(date)).minusYears(amount).toDate();
+    }
+
+
     public static Date now() {
-        return new Date();
+        return new Date(getCurrentTimestamp());
     }
 
     public static long getDistanceMills(Date one, Date two) {
@@ -207,12 +222,12 @@ public final class DateUtil {
         return diff;
     }
 
-    public static Date changeTime(Date date) throws ParseException {
+    public static Date changeDate(Date date, DatePatternEnum from, DatePatternEnum to) {
         if (null == date) {
             return null;
         } else {
-            DateTimeFormatter dateFormatter = DateTimeFormat.forPattern(DatePatternEnum.YYYYMMDDHHMM_BYSEP.getFormat());
-            return dateFormatter.parseDateTime((new DateTime(date)).toString(DatePatternEnum.YYYYMMDDHHMM_BYSEP.getFormat())).toDate();
+            DateTimeFormatter dateFormatter = DateTimeFormat.forPattern(to.getFormat());
+            return dateFormatter.parseDateTime((new DateTime(date)).toString(from.getFormat())).toDate();
         }
     }
 
