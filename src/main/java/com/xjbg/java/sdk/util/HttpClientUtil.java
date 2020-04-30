@@ -2,15 +2,22 @@ package com.xjbg.java.sdk.util;
 
 import com.xjbg.java.sdk.enums.Encoding;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HeaderElement;
+import org.apache.http.HeaderElementIterator;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.message.BasicHeaderElementIterator;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -26,8 +33,37 @@ import java.util.Map;
  */
 @Slf4j
 public final class HttpClientUtil {
-    private static final HttpClient CLIENT = HttpClientBuilder.create().build();
+    private static final HttpClient CLIENT = create(100, 50);
     private static final ThreadLocal<Encoding> ENCODING = new ThreadLocal<>();
+
+    public static HttpClient create(int maxTotal, int maxPerRoute) {
+        return create(maxTotal, maxPerRoute, 5000);
+    }
+
+    public static HttpClient create(int maxTotal, int maxPerRoute, int timeout) {
+        ConnectionKeepAliveStrategy myStrategy = (response, context) -> {
+            HeaderElementIterator it = new BasicHeaderElementIterator
+                    (response.headerIterator(HTTP.CONN_KEEP_ALIVE));
+            while (it.hasNext()) {
+                HeaderElement he = it.nextElement();
+                String param = he.getName();
+                String value = he.getValue();
+                if (value != null && "timeout".equalsIgnoreCase(param)) {
+                    return Long.parseLong(value) * 1000;
+                }
+            }
+            return 60 * 1000;
+        };
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+        connectionManager.setMaxTotal(Math.max(maxTotal, 10));
+        connectionManager.setDefaultMaxPerRoute(Math.max(maxPerRoute, 5));
+        connectionManager.setValidateAfterInactivity(120 * 1000);
+        return HttpClients.custom()
+                .setConnectionManager(connectionManager)
+                .setKeepAliveStrategy(myStrategy)
+                .setDefaultRequestConfig(RequestConfig.custom().setConnectionRequestTimeout(timeout).setSocketTimeout(timeout).setConnectTimeout(timeout).build())
+                .build();
+    }
 
     public static void setEncodingOnce(Encoding encoding) {
         ENCODING.set(encoding);
