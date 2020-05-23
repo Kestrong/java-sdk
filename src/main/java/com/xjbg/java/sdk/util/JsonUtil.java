@@ -22,6 +22,9 @@ public final class JsonUtil {
 
     public static <T> String toJsonString(T source) {
         try {
+            if (source instanceof String) {
+                return (String) source;
+            }
             return objectMapper.writeValueAsString(source);
         } catch (Exception var3) {
             throw new RuntimeException(var3);
