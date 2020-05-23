@@ -4,20 +4,24 @@ import com.xjbg.java.sdk.enums.Encoding;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HeaderElement;
 import org.apache.http.HeaderElementIterator;
+import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.AbstractResponseHandler;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeaderElementIterator;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -35,6 +39,13 @@ import java.util.Map;
 public final class HttpClientUtil {
     private static final HttpClient CLIENT = create(100, 50);
     private static final ThreadLocal<Encoding> ENCODING = new ThreadLocal<>();
+    private static final ResponseHandler<String> BASIC_RESPONSE_HANDLER = new BasicResponseHandler();
+    private static final ResponseHandler<byte[]> BYTE_RESPONSE_HANDLER = new AbstractResponseHandler<byte[]>() {
+        @Override
+        public byte[] handleEntity(HttpEntity httpEntity) throws IOException {
+            return EntityUtils.toByteArray(httpEntity);
+        }
+    };
 
     public static HttpClient create(int maxTotal, int maxPerRoute) {
         return create(maxTotal, maxPerRoute, 5000);
@@ -93,15 +104,19 @@ public final class HttpClientUtil {
         }
     }
 
-    public static String execute(HttpRequestBase requestBase, Map<String, String> headers) throws IOException {
+    public static <T> T execute(HttpRequestBase requestBase, Map<String, String> headers, ResponseHandler<T> handler) throws IOException {
         if (CollectionUtil.isNotEmpty(headers)) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
                 requestBase.addHeader(entry.getKey(), entry.getValue());
             }
         }
-        String result = CLIENT.execute(requestBase, new BasicResponseHandler());
-        log.debug(result);
+        T result = CLIENT.execute(requestBase, handler);
+        log.debug(JsonUtil.toJsonString(result));
         return result;
+    }
+
+    public static String execute(HttpRequestBase requestBase, Map<String, String> headers) throws IOException {
+        return execute(requestBase, headers, BASIC_RESPONSE_HANDLER);
     }
 
     public static String get(String url) throws IOException {
@@ -184,4 +199,12 @@ public final class HttpClientUtil {
         return JsonUtil.toObject(result, clazz);
     }
 
+    public static byte[] getFile(String url) throws IOException {
+        return getFile(url, Collections.emptyMap(), Collections.emptyMap());
+    }
+
+    public static byte[] getFile(String url, Map<String, String> headers, Map<String, String> params) throws IOException {
+        HttpGet httpGet = new HttpGet(buildUri(url, params));
+        return execute(httpGet, headers, BYTE_RESPONSE_HANDLER);
+    }
 }
