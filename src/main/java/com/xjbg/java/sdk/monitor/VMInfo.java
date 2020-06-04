@@ -13,13 +13,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by liqiang on 15/11/12.
+ * @author kesc
+ * @since 2019/6/24
  */
 public class VMInfo {
     private static final Logger LOG = LoggerFactory.getLogger(VMInfo.class);
     static final long MB = 1024 * 1024;
     static final long GB = 1024 * 1024 * 1024;
-    public static Object lock = new Object();
+    public final static byte[] LOCK = new byte[0];
     private static VMInfo vmInfo;
 
     /**
@@ -27,7 +28,7 @@ public class VMInfo {
      */
     public static VMInfo getVmInfo() {
         if (vmInfo == null) {
-            synchronized (lock) {
+            synchronized (LOCK) {
                 if (vmInfo == null) {
                     try {
                         vmInfo = new VMInfo();
