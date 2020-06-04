@@ -21,7 +21,7 @@ public class VMInfo {
     static final long MB = 1024 * 1024;
     static final long GB = 1024 * 1024 * 1024;
     public final static byte[] LOCK = new byte[0];
-    private static VMInfo vmInfo;
+    private static volatile VMInfo vmInfo;
 
     /**
      * @return null or vmInfo. null is something error, job no care it.
