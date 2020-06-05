@@ -13,11 +13,12 @@ import java.util.TimeZone;
  * @author kesc
  * @since 2018/1/27
  */
+@SuppressWarnings({"unchecked", "unused"})
 public final class JsonUtil {
-    private static ObjectMapper objectMapper = new CustomObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = new CustomObjectMapper();
 
     static {
-        objectMapper.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+        OBJECT_MAPPER.setTimeZone(TimeZone.getDefault());
     }
 
     public static <T> String toJsonString(T source) {
@@ -25,7 +26,7 @@ public final class JsonUtil {
             if (source instanceof String) {
                 return (String) source;
             }
-            return objectMapper.writeValueAsString(source);
+            return OBJECT_MAPPER.writeValueAsString(source);
         } catch (Exception var3) {
             throw new RuntimeException(var3);
         }
@@ -36,44 +37,79 @@ public final class JsonUtil {
             if (clazz.isAssignableFrom(String.class)) {
                 return (T) source;
             }
-            return objectMapper.readValue(source, clazz);
+            return OBJECT_MAPPER.readValue(source, clazz);
         } catch (Exception var4) {
             throw new RuntimeException(var4);
         }
     }
 
+    /**
+     * deserialize string to object with generic type
+     *
+     * @param source         json string
+     * @param clazz          object class
+     * @param parametricType generic type
+     * @return T<P>
+     */
     public static <T, P> T toObject(String source, Class<T> clazz, Class<P> parametricType) {
         try {
-            JavaType javaType = objectMapper.getTypeFactory().constructParametricType(clazz, parametricType);
-            return objectMapper.readValue(source, javaType);
+            JavaType javaType = OBJECT_MAPPER.getTypeFactory().constructParametricType(clazz, parametricType);
+            return OBJECT_MAPPER.readValue(source, javaType);
         } catch (Exception var4) {
             throw new RuntimeException(var4);
         }
     }
 
+    /**
+     * deserialize string to object with list generic type
+     *
+     * @param source         json string
+     * @param clazz          object class
+     * @param parametricType generic type
+     * @return like T<List<P>>
+     */
     public static <T, P> T toObjectCollection(String source, Class<T> clazz, Class<P> parametricType) {
         try {
-            JavaType javaType = objectMapper.getTypeFactory().constructCollectionType(List.class, parametricType);
-            JavaType type = objectMapper.getTypeFactory().constructParametricType(clazz, javaType);
-            return objectMapper.readValue(source, type);
+            JavaType javaType = OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, parametricType);
+            JavaType type = OBJECT_MAPPER.getTypeFactory().constructParametricType(clazz, javaType);
+            return OBJECT_MAPPER.readValue(source, type);
         } catch (Exception var4) {
             throw new RuntimeException(var4);
         }
     }
+
 
     public static <T> List<T> toList(String source, Class<T> tClass) {
         try {
-            JavaType javaType = objectMapper.getTypeFactory().constructParametricType(List.class, new Class[]{tClass});
-            return objectMapper.readValue(source, javaType);
+            JavaType javaType = OBJECT_MAPPER.getTypeFactory().constructCollectionLikeType(List.class, tClass);
+            return OBJECT_MAPPER.readValue(source, javaType);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    public static <T, P> List<T> toList(String source, Class<T> valueType, Class<P> valueParametricType) {
+        try {
+            JavaType elementType = OBJECT_MAPPER.getTypeFactory().constructParametricType(valueType, valueParametricType);
+            JavaType listType = OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, elementType);
+            return OBJECT_MAPPER.readValue(source, listType);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <V> Map<String, V> toMap(String json, Class<V> valueClazz) {
+        return toMap(json, String.class, valueClazz);
+    }
+
+    public static Map<Object, Object> toMap(String json) {
+        return toMap(json, Object.class, Object.class);
+    }
+
     public static <K, T> Map<K, T> toMap(String json, Class<K> keyType, Class<T> valueType) {
         try {
-            JavaType javaType = objectMapper.getTypeFactory().constructParametricType(Map.class, keyType, valueType);
-            return objectMapper.readValue(json, javaType);
+            JavaType javaType = OBJECT_MAPPER.getTypeFactory().constructMapLikeType(Map.class, keyType, valueType);
+            return OBJECT_MAPPER.readValue(json, javaType);
         } catch (IOException var5) {
             throw new RuntimeException(var5);
         }
