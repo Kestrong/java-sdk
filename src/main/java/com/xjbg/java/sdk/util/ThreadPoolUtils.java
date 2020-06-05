@@ -58,8 +58,16 @@ public class ThreadPoolUtils {
         return POOL.submit(runnable);
     }
 
+    public static <V> Future<V> submit(Callable<V> callable) {
+        return POOL.submit(callable);
+    }
+
     public static Future<?> submitSchedule(Runnable runnable) {
         return SCHEDULED_POOL.submit(runnable);
+    }
+
+    public static <V> Future<V> submitSchedule(Callable<V> callable) {
+        return SCHEDULED_POOL.submit(callable);
     }
 
     public static ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
