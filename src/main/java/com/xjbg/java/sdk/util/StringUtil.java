@@ -36,8 +36,12 @@ public final class StringUtil extends StringUtils {
         return UUID.randomUUID().toString();
     }
 
+    public static String latterUuid() {
+        return UUID.randomUUID().toString().replace(MINUS, EMPTY);
+    }
+
     public static String camel2Underline(String str) {
-        if (str == null || EMPTY.equals(str.trim())) {
+        if (isBlank(str)) {
             return str;
         }
         str = str.trim();
@@ -46,8 +50,7 @@ public final class StringUtil extends StringUtils {
         for (int i = 1; i < str.length(); i++) {
             char ch = str.charAt(i);
             if (Character.isUpperCase(ch)) {
-                result.append("_");
-                result.append(Character.toLowerCase(ch));
+                result.append('_').append(Character.toLowerCase(ch));
             } else {
                 result.append(ch);
             }
@@ -56,7 +59,7 @@ public final class StringUtil extends StringUtils {
     }
 
     public static String underline2Camel(String str) {
-        if (str == null || EMPTY.equals(str.trim()) || !str.contains(EMPTY)) {
+        if (isBlank(str)) {
             return str;
         }
         str = str.trim();
