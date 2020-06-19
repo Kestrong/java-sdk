@@ -3,10 +3,12 @@ package com.xjbg.java.sdk.lock;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 细粒度锁
+ *
  * @author kesc
  * @since 2019/3/8
  */
-public interface DistributedLock {
+public interface StripedLock {
     /**
      * 获取锁 一直阻塞
      *
@@ -21,8 +23,9 @@ public interface DistributedLock {
      * @param time
      * @param timeUnit
      * @return
+     * @throws InterruptedException
      */
-    boolean tryLock(String key, long time, TimeUnit timeUnit);
+    boolean tryLock(String key, long time, TimeUnit timeUnit) throws InterruptedException;
 
     /**
      * 释放锁

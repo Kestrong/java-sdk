@@ -1,6 +1,6 @@
 package com.xjbg.java.sdk.lock.impl;
 
-import com.xjbg.java.sdk.lock.DistributedLock;
+import com.xjbg.java.sdk.lock.StripedLock;
 import com.xjbg.java.sdk.util.JsonUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,19 +16,25 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 基于redis的细粒度分布式锁
+ *
  * @author kesc
  * @since 2019/3/8
  */
 @Slf4j
 @Getter
 @Setter
-public final class DefaultDistributedLock implements DistributedLock {
+public final class DefaultRedisDistributedLock implements StripedLock {
     private static final long LONG_ZERO = 0L;
     private static final String PREFIX = "lock:";
     private static final long DEFAULT_SLEEP_TIME = 10L;
     private int maxLeaseTime = 60000;
     private StringRedisTemplate stringRedisTemplate;
-    private static ThreadLocal<UUID> threadUuid = new ThreadLocal<>();
+    private static final ThreadLocal<UUID> THREAD_UUID = new ThreadLocal<>();
+
+    public DefaultRedisDistributedLock(StringRedisTemplate stringRedisTemplate) {
+        this.stringRedisTemplate = stringRedisTemplate;
+    }
 
     @Override
     public void lock(String key) {
@@ -48,7 +54,7 @@ public final class DefaultDistributedLock implements DistributedLock {
     public void unlock(String key) {
         if (this.isHeldByCurrentThread(key)) {
             this.unlockInner(key);
-            threadUuid.remove();
+            THREAD_UUID.remove();
         }
 
     }
@@ -61,38 +67,38 @@ public final class DefaultDistributedLock implements DistributedLock {
 
     @Override
     public boolean isHeldByCurrentThread(String key) {
-        DefaultDistributedLock.LockValue lockValue = this.getCurrentLock(key);
-        return lockValue != null && Objects.equals(threadUuid.get(), lockValue.getId());
+        DefaultRedisDistributedLock.LockValue lockValue = this.getCurrentLock(key);
+        return lockValue != null && Objects.equals(THREAD_UUID.get(), lockValue.getId());
     }
 
-    private DefaultDistributedLock.LockValue getCurrentLock(String key) {
+    private DefaultRedisDistributedLock.LockValue getCurrentLock(String key) {
         String lockKey = this.getKey(key);
         String value = this.stringRedisTemplate.opsForValue().get(lockKey);
-        return value == null ? null : JsonUtil.toObject(value, DefaultDistributedLock.LockValue.class);
+        return value == null ? null : JsonUtil.toObject(value, DefaultRedisDistributedLock.LockValue.class);
     }
 
     private String getKey(String key) {
-        return "lock:" + key;
+        return PREFIX + key;
     }
 
     private boolean lockInner(String key, int leaseTime, long timeout) {
         String lockKey = this.getKey(key);
         try {
-            boolean isTry = timeout > 0L;
-            String value = JsonUtil.toJsonString(new DefaultDistributedLock.LockValue());
+            boolean isTry = timeout > LONG_ZERO;
+            String value = JsonUtil.toJsonString(new DefaultRedisDistributedLock.LockValue());
             log.debug("begin try lock, isTry={}, timeout={}, key={}", isTry, timeout, lockKey);
             StopWatch stopWatch = new StopWatch();
             stopWatch.start();
             stopWatch.stop();
             while (!isTry || stopWatch.getTotalTimeMillis() <= timeout) {
                 stopWatch.start();
-                Boolean success = setIfAbsent(this.stringRedisTemplate, lockKey, value, (long) leaseTime, TimeUnit.MILLISECONDS);
+                Boolean success = setIfAbsent(this.stringRedisTemplate, lockKey, value, leaseTime, TimeUnit.MILLISECONDS);
                 if (success) {
                     log.debug("locked, key= {}, value={}", lockKey, value);
                     return true;
                 }
                 stopWatch.stop();
-                Thread.sleep(10L);
+                Thread.sleep(DEFAULT_SLEEP_TIME);
             }
             log.info("fail to lock cause by timeout, key={}", lockKey);
             return false;
@@ -120,7 +126,7 @@ public final class DefaultDistributedLock implements DistributedLock {
         private Long threadId;
 
         public LockValue() {
-            DefaultDistributedLock.threadUuid.set(this.id);
+            DefaultRedisDistributedLock.THREAD_UUID.set(this.id);
             this.threadId = Thread.currentThread().getId();
         }
 
@@ -130,7 +136,7 @@ public final class DefaultDistributedLock implements DistributedLock {
 
         public void setId(UUID id) {
             this.id = id;
-            DefaultDistributedLock.threadUuid.set(this.id);
+            DefaultRedisDistributedLock.THREAD_UUID.set(this.id);
         }
 
         public Long getThreadId() {
