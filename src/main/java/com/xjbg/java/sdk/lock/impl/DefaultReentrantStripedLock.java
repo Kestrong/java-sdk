@@ -19,8 +19,7 @@ public class DefaultReentrantStripedLock implements StripedLock {
     private static final byte[] LOCK = new byte[0];
     private final Map<String, ReentrantLock> lockMap = new HashMap<>();
 
-    @Override
-    public void lock(String key) {
+    private ReentrantLock computeLock(String key) {
         if (!lockMap.containsKey(key)) {
             synchronized (LOCK) {
                 if (!lockMap.containsKey(key)) {
@@ -28,21 +27,19 @@ public class DefaultReentrantStripedLock implements StripedLock {
                 }
             }
         }
-        lockMap.get(key).lock();
+        return lockMap.get(key);
+    }
+
+    @Override
+    public void lock(String key) {
+        computeLock(key).lock();
         log.debug("get lock by key:{}", key);
     }
 
     @Override
     public boolean tryLock(String key, long timeout, TimeUnit timeUnit) throws InterruptedException {
-        if (!lockMap.containsKey(key)) {
-            synchronized (LOCK) {
-                if (!lockMap.containsKey(key)) {
-                    lockMap.put(key, new ReentrantLock());
-                }
-            }
-        }
-        boolean tryLock = lockMap.get(key).tryLock(timeout, timeUnit);
-        log.debug("try lock by key:{},timeout:{},timeUnit:{},success:{} ", key, timeout, timeUnit.toString(),
+        boolean tryLock = computeLock(key).tryLock(timeout, timeUnit);
+        log.debug("try lock by key:{},timeout:{},timeUnit:{},success:{}", key, timeout, timeUnit.toString(),
                 tryLock);
         return tryLock;
     }
