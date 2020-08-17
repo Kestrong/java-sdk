@@ -10,7 +10,6 @@ import java.security.NoSuchAlgorithmException;
  * @author keshicong
  * @ClassName MD5
  * @Description
- * @mail 492167585@qq.com
  * @date 2016年10月1日 下午2:58:49
  */
 public class MD5 {

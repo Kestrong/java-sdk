@@ -6,7 +6,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
 
 /**
- * @author kesc /mail to me 492167585@qq.com
+ * @author kesc
  * @ClassName AESOperator
  * @Description AES加密
  * @date 2016年12月9日 上午9:00:36
