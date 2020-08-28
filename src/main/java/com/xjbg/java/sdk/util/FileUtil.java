@@ -238,4 +238,8 @@ public class FileUtil {
         }
     }
 
+    public static String getSuffix(String file) {
+        String[] parts = file.split("\\.");
+        return "." + parts[parts.length - 1];
+    }
 }
