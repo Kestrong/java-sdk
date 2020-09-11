@@ -239,7 +239,7 @@ public class FileUtil {
     }
 
     public static String getSuffix(String file) {
-        String[] parts = file.split("\\.");
-        return "." + parts[parts.length - 1];
+        int index = file.lastIndexOf(".");
+        return index > -1 ? file.substring(index) : StringUtil.EMPTY;
     }
 }
