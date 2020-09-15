@@ -32,7 +32,7 @@ public class RsaOperator {
 
     public static RsaOperator getInstance() {
         if (instance == null) {
-            synchronized (AESOperator.class) {
+            synchronized (RsaOperator.class) {
                 if (instance == null) {
                     instance = new RsaOperator();
                 }
