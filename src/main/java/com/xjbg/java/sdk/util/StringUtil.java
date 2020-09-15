@@ -1,6 +1,7 @@
 package com.xjbg.java.sdk.util;
 
 
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.UUID;
@@ -79,5 +80,20 @@ public final class StringUtil extends StringUtils {
             }
         }
         return result.toString();
+    }
+
+    public static byte[] getBytes(String src) {
+        if (src == null) {
+            return null;
+        }
+        return src.getBytes();
+    }
+
+    @SneakyThrows
+    public static byte[] getBytes(String src, String charset) {
+        if (src == null) {
+            return null;
+        }
+        return src.getBytes(charset);
     }
 }
