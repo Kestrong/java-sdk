@@ -1,9 +1,9 @@
 package com.xjbg.java.sdk.util;
 
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,7 +18,7 @@ public final class BeanUtil extends BeanUtils {
         if (CollectionUtil.isEmpty(source)) {
             return Collections.emptyList();
         }
-        List<R> result = Lists.newArrayList();
+        List<R> result = new ArrayList<>();
         source.forEach(x -> {
             R instance = instantiateClass(clazz);
             BeanUtils.copyProperties(x, instance);

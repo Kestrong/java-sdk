@@ -1,7 +1,6 @@
 package com.xjbg.java.sdk.util;
 
 import com.xjbg.java.sdk.enums.Encoding;
-import org.springframework.util.Base64Utils;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -86,7 +85,7 @@ public class RsaOperator {
      */
     public String encryptPrivate(final String data, final String key) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException {
         byte[] dataRaw = data == null ? null : data.getBytes(Encoding.UTF_8.getEncoding());
-        byte[] keyRaw = key == null ? null : Base64Utils.decode(key.getBytes());
+        byte[] keyRaw = key == null ? null : Base64Util.decode(key.getBytes());
         return encryptPrivate(dataRaw, keyRaw);
     }
 
@@ -99,7 +98,7 @@ public class RsaOperator {
         Cipher cipher = Cipher.getInstance(RSA);
         cipher.init(Cipher.ENCRYPT_MODE, privateKey);
         byte[] result = multiSlot(data, cipher, MAX_ENCRYPT_SIZE);
-        return new String(Base64Utils.encode(result));
+        return new String(Base64Util.encode(result));
     }
 
     /**
@@ -116,8 +115,8 @@ public class RsaOperator {
      * @throws IllegalBlockSizeException
      */
     public String decryptPublic(final String data, final String key) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException {
-        byte[] dataRaw = data == null ? null : Base64Utils.decode(data.getBytes());
-        byte[] keyRaw = key == null ? null : Base64Utils.decode(key.getBytes());
+        byte[] dataRaw = data == null ? null : Base64Util.decode(data.getBytes());
+        byte[] keyRaw = key == null ? null : Base64Util.decode(key.getBytes());
         return decryptPublic(dataRaw, keyRaw);
     }
 
@@ -135,7 +134,7 @@ public class RsaOperator {
 
     public String encryptPublic(final String data, final String key) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException {
         byte[] dataRaw = data == null ? null : data.getBytes(Encoding.UTF_8.getEncoding());
-        byte[] keyRaw = key == null ? null : Base64Utils.decode(key.getBytes());
+        byte[] keyRaw = key == null ? null : Base64Util.decode(key.getBytes());
         return encryptPublic(dataRaw, keyRaw);
     }
 
@@ -148,12 +147,12 @@ public class RsaOperator {
         Cipher cipher = Cipher.getInstance(RSA);
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
         byte[] result = multiSlot(data, cipher, MAX_ENCRYPT_SIZE);
-        return new String(Base64Utils.encode(result));
+        return new String(Base64Util.encode(result));
     }
 
     public String decryptPrivate(final String data, final String key) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException {
-        byte[] dataRaw = data == null ? null : Base64Utils.decode(data.getBytes());
-        byte[] keyRaw = key == null ? null : Base64Utils.decode(key.getBytes());
+        byte[] dataRaw = data == null ? null : Base64Util.decode(data.getBytes());
+        byte[] keyRaw = key == null ? null : Base64Util.decode(key.getBytes());
         return decryptPrivate(dataRaw, keyRaw);
     }
 
@@ -174,8 +173,8 @@ public class RsaOperator {
         try {
             RsaOperator rsaOperator = RsaOperator.getInstance();
             KeyPair keyPair = rsaOperator.genKey();
-            String publicKey = new String(Base64Utils.encode(keyPair.getPublic().getEncoded()));
-            String privateKey = new String(Base64Utils.encode(keyPair.getPrivate().getEncoded()));
+            String publicKey = new String(Base64Util.encode(keyPair.getPublic().getEncoded()));
+            String privateKey = new String(Base64Util.encode(keyPair.getPrivate().getEncoded()));
             System.out.println("publicKey:" + publicKey + "\n" + "privateKey:" + privateKey);
             String result = rsaOperator.encryptPrivate(data, privateKey);
             System.out.println(result);
