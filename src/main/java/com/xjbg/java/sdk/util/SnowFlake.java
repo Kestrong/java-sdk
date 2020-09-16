@@ -91,15 +91,13 @@ public class SnowFlake {
      */
     private long lastTimestamp = -1L;
 
-    private static volatile SnowFlake instance = null;
-
     /**
      * 构造函数
      *
      * @param workerId     工作ID (0~31)
      * @param datacenterId 数据中心ID (0~31)
      */
-    private SnowFlake(long workerId, long datacenterId) {
+    public SnowFlake(long workerId, long datacenterId) {
         if (workerId > maxWorkerId || workerId < 0) {
             throw new IllegalArgumentException(
                     String.format("worker Id can't be greater than %d or less than 0", maxWorkerId));
@@ -110,17 +108,6 @@ public class SnowFlake {
         }
         this.workerId = workerId;
         this.datacenterId = datacenterId;
-    }
-
-    public static SnowFlake getInstance() {
-        if (instance == null) {
-            synchronized (SnowFlake.class) {
-                if (instance == null) {
-                    instance = new SnowFlake(0, 0);
-                }
-            }
-        }
-        return instance;
     }
 
     /**
@@ -179,7 +166,7 @@ public class SnowFlake {
     }
 
     public static void main(String[] args) {
-        SnowFlake idWorker = SnowFlake.getInstance();
+        SnowFlake idWorker = new SnowFlake(0, 0);
         long start = System.currentTimeMillis();
         System.out.println("开始时间戳：" + start);
         for (int i = 0; i < 10; i++) {
