@@ -7,10 +7,7 @@ import org.joda.time.format.DateTimeFormatter;
 
 import java.text.Format;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author kesc
@@ -32,18 +29,34 @@ public final class DateUtil {
         return parse(date, DatePatternEnum.YYYYMMDD_BYSEP);
     }
 
+    public static Date parseDateTime(String dateTime, TimeZone timeZone) {
+        return parse(dateTime, DatePatternEnum.YYYYMMDDHHMMSS_BYSEP.getFormat(), timeZone);
+    }
+
+    public static Date parseDate(String date, TimeZone timeZone) {
+        return parse(date, DatePatternEnum.YYYYMMDD_BYSEP.getFormat(), timeZone);
+    }
+
     public static Date parse(String date, DatePatternEnum pattern) {
         return parse(date, pattern.getFormat());
     }
 
     public static Date parse(String date, String pattern) {
+        return parse(date, pattern, TimeZone.getDefault());
+    }
+
+    public static Date parse(String date, DatePatternEnum pattern, TimeZone timeZone) {
+        return parse(date, pattern.getFormat(), timeZone);
+    }
+
+    public static Date parse(String date, String pattern, TimeZone timeZone) {
         DateTimeFormatter dateFormatter = DateTimeFormat.forPattern(pattern);
-        return dateFormatter.parseDateTime(date).toDate();
+        DateTimeZone dateTimeZone = timeZone == null ? DateTimeZone.getDefault() : DateTimeZone.forTimeZone(timeZone);
+        return dateFormatter.withZone(dateTimeZone).parseDateTime(date).toDate();
     }
 
     public static String format(Date date, String pattern) {
-        DateTime dateTime = new DateTime(date);
-        return dateTime.toString(pattern);
+        return format(date, pattern, TimeZone.getDefault());
     }
 
     public static String format(Date date, DatePatternEnum datePatternEnum) {
@@ -56,6 +69,24 @@ public final class DateUtil {
 
     public static String formatDate(Date date) {
         return format(date, DatePatternEnum.YYYYMMDD_BYSEP);
+    }
+
+    public static String formatDateTime(Date date, TimeZone timeZone) {
+        return format(date, DatePatternEnum.YYYYMMDDHHMMSS_BYSEP.getFormat(), timeZone);
+    }
+
+    public static String formatDate(Date date, TimeZone timeZone) {
+        return format(date, DatePatternEnum.YYYYMMDD_BYSEP.getFormat(), timeZone);
+    }
+
+    public static String format(Date date, DatePatternEnum pattern, TimeZone timeZone) {
+        return format(date, pattern.getFormat(), timeZone);
+    }
+
+    public static String format(Date date, String pattern, TimeZone timeZone) {
+        DateTimeZone dateTimeZone = timeZone == null ? DateTimeZone.getDefault() : DateTimeZone.forTimeZone(timeZone);
+        DateTime dateTime = new DateTime(date, dateTimeZone);
+        return dateTime.toString(pattern);
     }
 
     public static Date getMinDate(Date date) {
