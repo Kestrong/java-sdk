@@ -1,17 +1,16 @@
 package com.xjbg.java.sdk.customize.jackson;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.xjbg.java.sdk.enums.DatePatternEnum;
 import com.xjbg.java.sdk.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 /**
@@ -19,7 +18,7 @@ import java.text.SimpleDateFormat;
  * @since 2019/5/15
  */
 public class CustomObjectMapper extends ObjectMapper {
-    private boolean camelCaseToLowerCaseWithUnderscores = false;
+    private boolean camelCaseToLowerCaseWithUnderscores;
     private String dateFormatPattern;
 
     public void setCamelCaseToLowerCaseWithUnderscores(boolean camelCaseToLowerCaseWithUnderscores) {
@@ -31,46 +30,42 @@ public class CustomObjectMapper extends ObjectMapper {
     }
 
     public CustomObjectMapper() {
-        //jason转java时忽略不用的jason属性
-        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this(false, DatePatternEnum.YYYYMMDDHHMMSS_BYSEP.getFormat());
     }
 
-    public CustomObjectMapper(boolean camelCaseToLowerCaseWithUnderscores) {
-        //jason转java时忽略不用的jason属性
-        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        if (camelCaseToLowerCaseWithUnderscores) {
-            setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
-        }
+    public CustomObjectMapper(boolean camelCaseToLowerCaseWithUnderscores, String datePattern) {
+        this.camelCaseToLowerCaseWithUnderscores = camelCaseToLowerCaseWithUnderscores;
+        this.dateFormatPattern = datePattern;
+        init();
     }
 
-    public void init() {
-        // 排除值为空属性
-//        setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    private void init() {
         // 进行缩进输出
         configure(SerializationFeature.INDENT_OUTPUT, true);
+        configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        //jason转java时忽略不用的jason属性
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         // 将驼峰转为下划线
         if (camelCaseToLowerCaseWithUnderscores) {
-            setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+            setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        } else {
+            setPropertyNamingStrategy(PropertyNamingStrategy.LOWER_CAMEL_CASE);
         }
         // 进行日期格式化
         if (StringUtil.isNotEmpty(dateFormatPattern)) {
-            DateFormat dateFormat = new SimpleDateFormat(dateFormatPattern);
-            setDateFormat(dateFormat);
+            setDateFormat(new SimpleDateFormat(dateFormatPattern));
         }
         SimpleModule module = new CustomerModule();
         module.addSerializer(BigDecimal.class, new ToStringSerializer());
         registerModule(module);
-
-
     }
 
-    class CustomerModule extends SimpleModule {
+    static class CustomerModule extends SimpleModule {
 
         public CustomerModule() {
             addDeserializer(String.class, new StdScalarDeserializer<String>(String.class) {
                 @Override
-                public String deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException,
-                        JsonProcessingException {
+                public String deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
                     return StringUtils.trim(jp.getValueAsString());
                 }
             });

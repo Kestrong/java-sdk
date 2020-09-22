@@ -7,7 +7,6 @@ import com.xjbg.java.sdk.customize.jackson.CustomObjectMapper;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 
 /**
  * @author kesc
@@ -15,10 +14,21 @@ import java.util.TimeZone;
  */
 @SuppressWarnings({"unchecked", "unused"})
 public final class JsonUtil {
-    private static final ObjectMapper OBJECT_MAPPER = new CustomObjectMapper();
+    private static final ObjectMapper DEFAULT_OBJECT_MAPPER = new CustomObjectMapper();
+    private static volatile ObjectMapper OBJECT_MAPPER;
 
-    static {
-        OBJECT_MAPPER.setTimeZone(TimeZone.getDefault());
+    public static void setObjectMapper(ObjectMapper objectMapper) {
+        if (OBJECT_MAPPER == null) {
+            synchronized (JsonUtil.class) {
+                if (OBJECT_MAPPER == null) {
+                    OBJECT_MAPPER = objectMapper;
+                }
+            }
+        }
+    }
+
+    public static ObjectMapper getObjectMapper() {
+        return OBJECT_MAPPER == null ? DEFAULT_OBJECT_MAPPER : OBJECT_MAPPER;
     }
 
     public static <T> String toJsonString(T source) {
@@ -26,7 +36,7 @@ public final class JsonUtil {
             if (source instanceof String) {
                 return (String) source;
             }
-            return OBJECT_MAPPER.writeValueAsString(source);
+            return getObjectMapper().writeValueAsString(source);
         } catch (Exception var3) {
             throw new RuntimeException(var3);
         }
@@ -37,7 +47,7 @@ public final class JsonUtil {
             if (clazz.isAssignableFrom(String.class)) {
                 return (T) source;
             }
-            return OBJECT_MAPPER.readValue(source, clazz);
+            return getObjectMapper().readValue(source, clazz);
         } catch (Exception var4) {
             throw new RuntimeException(var4);
         }
@@ -53,8 +63,9 @@ public final class JsonUtil {
      */
     public static <T, P> T toObject(String source, Class<T> clazz, Class<P> parametricType) {
         try {
-            JavaType javaType = OBJECT_MAPPER.getTypeFactory().constructParametricType(clazz, parametricType);
-            return OBJECT_MAPPER.readValue(source, javaType);
+            ObjectMapper objectMapper = getObjectMapper();
+            JavaType javaType = objectMapper.getTypeFactory().constructParametricType(clazz, parametricType);
+            return objectMapper.readValue(source, javaType);
         } catch (Exception var4) {
             throw new RuntimeException(var4);
         }
@@ -70,9 +81,10 @@ public final class JsonUtil {
      */
     public static <T, P> T toObjectCollection(String source, Class<T> clazz, Class<P> parametricType) {
         try {
-            JavaType javaType = OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, parametricType);
-            JavaType type = OBJECT_MAPPER.getTypeFactory().constructParametricType(clazz, javaType);
-            return OBJECT_MAPPER.readValue(source, type);
+            ObjectMapper objectMapper = getObjectMapper();
+            JavaType javaType = objectMapper.getTypeFactory().constructCollectionType(List.class, parametricType);
+            JavaType type = objectMapper.getTypeFactory().constructParametricType(clazz, javaType);
+            return objectMapper.readValue(source, type);
         } catch (Exception var4) {
             throw new RuntimeException(var4);
         }
@@ -81,8 +93,9 @@ public final class JsonUtil {
 
     public static <T> List<T> toList(String source, Class<T> tClass) {
         try {
-            JavaType javaType = OBJECT_MAPPER.getTypeFactory().constructCollectionLikeType(List.class, tClass);
-            return OBJECT_MAPPER.readValue(source, javaType);
+            ObjectMapper objectMapper = getObjectMapper();
+            JavaType javaType = objectMapper.getTypeFactory().constructCollectionLikeType(List.class, tClass);
+            return objectMapper.readValue(source, javaType);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -90,9 +103,10 @@ public final class JsonUtil {
 
     public static <T, P> List<T> toList(String source, Class<T> valueType, Class<P> valueParametricType) {
         try {
-            JavaType elementType = OBJECT_MAPPER.getTypeFactory().constructParametricType(valueType, valueParametricType);
-            JavaType listType = OBJECT_MAPPER.getTypeFactory().constructCollectionType(List.class, elementType);
-            return OBJECT_MAPPER.readValue(source, listType);
+            ObjectMapper objectMapper = getObjectMapper();
+            JavaType elementType = objectMapper.getTypeFactory().constructParametricType(valueType, valueParametricType);
+            JavaType listType = objectMapper.getTypeFactory().constructCollectionType(List.class, elementType);
+            return objectMapper.readValue(source, listType);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -108,11 +122,11 @@ public final class JsonUtil {
 
     public static <K, T> Map<K, T> toMap(String json, Class<K> keyType, Class<T> valueType) {
         try {
-            JavaType javaType = OBJECT_MAPPER.getTypeFactory().constructMapLikeType(Map.class, keyType, valueType);
-            return OBJECT_MAPPER.readValue(json, javaType);
+            ObjectMapper objectMapper = getObjectMapper();
+            JavaType javaType = objectMapper.getTypeFactory().constructMapLikeType(Map.class, keyType, valueType);
+            return objectMapper.readValue(json, javaType);
         } catch (IOException var5) {
             throw new RuntimeException(var5);
         }
     }
-
 }
