@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
@@ -158,12 +157,16 @@ public class FileUtil {
         if (!file.exists()) {
             createFile(file);
         }
+        write(new FileOutputStream(file, append), inputStream);
+    }
+
+    public static void write(OutputStream outputStream, InputStream inputStream) throws IOException {
         try (InputStream input = new BufferedInputStream(inputStream);
-             OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file, append))) {
+             OutputStream bufferedOutputStream = new BufferedOutputStream(outputStream)) {
             int index;
             byte[] bytes = new byte[2048];
             while ((index = input.read(bytes)) != -1) {
-                outputStream.write(bytes, 0, index);
+                bufferedOutputStream.write(bytes, 0, index);
             }
         }
     }
@@ -223,15 +226,27 @@ public class FileUtil {
         return new String(readAsBytes(file), encoding.getEncoding());
     }
 
+    public static String readAsString(InputStream inputStream) throws IOException {
+        return readAsString(inputStream, Encoding.UTF_8);
+    }
+
+    public static String readAsString(InputStream inputStream, Encoding encoding) throws IOException {
+        return new String(readAsBytes(inputStream), encoding.getEncoding());
+    }
+
     public static byte[] readAsBytes(String file) throws IOException {
-        try (InputStream input = new BufferedInputStream(new FileInputStream(getFile(file)))) {
+        return readAsBytes(new FileInputStream(getFile(file)));
+    }
+
+    public static byte[] readAsBytes(InputStream input) throws IOException {
+        try (InputStream bufferedInputStream = new BufferedInputStream(input);
+             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             int index;
             byte[] bytes = new byte[2048];
-            ByteBuffer byteBuffer = ByteBuffer.allocate(input.available());
-            while ((index = input.read(bytes)) != -1) {
-                byteBuffer.put(bytes, 0, index);
+            while ((index = bufferedInputStream.read(bytes)) != -1) {
+                outputStream.write(bytes, 0, index);
             }
-            return byteBuffer.array();
+            return outputStream.toByteArray();
         } catch (IOException e) {
             log.error(e.getMessage(), e);
             throw e;

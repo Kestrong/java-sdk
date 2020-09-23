@@ -1,9 +1,10 @@
 package com.xjbg.java.sdk.util;
 
 
-import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 
@@ -89,11 +90,19 @@ public final class StringUtil extends StringUtils {
         return src.getBytes();
     }
 
-    @SneakyThrows
     public static byte[] getBytes(String src, String charset) {
+        return getBytes(src, Charset.forName(charset));
+    }
+
+    public static byte[] getBytes(String src, Charset charset) {
         if (src == null) {
             return null;
         }
         return src.getBytes(charset);
     }
+
+    public static byte[] getUTF8Bytes(String src) {
+        return getBytes(src, StandardCharsets.UTF_8);
+    }
+
 }

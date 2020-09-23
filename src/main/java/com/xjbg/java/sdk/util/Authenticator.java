@@ -3,8 +3,8 @@ package com.xjbg.java.sdk.util;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 import java.util.Base64.Decoder;
@@ -16,20 +16,22 @@ import java.util.Base64.Decoder;
  * @date 2017年7月18日 下午2:26:56
  */
 public class Authenticator {
-    private final SecureRandom secureRandom = new SecureRandom();
     public static final String PBKDF2_ALGORITHM = "PBKDF2WithHmacSHA512";
     public static final int SALT_BYTES = 24;
     public static final int HASH_BYTES = 24;
     public static final int PBKDF2_ITERATIONS = 1000;
-    public static final String CHARSET = "UTF-8";
 
     public boolean validate(String givenPassword, String hash, String salt) {
         Decoder decoder = Base64.getDecoder();
+        byte[] hashByte = decoder.decode(hash);
+        byte[] saltByte = decoder.decode(salt);
+        return validate(givenPassword, hashByte, saltByte);
+    }
+
+    public boolean validate(String givenPassword, byte[] hash, byte[] salt) {
         try {
-            byte[] hashByte = decoder.decode(hash);
-            byte[] saltByte = decoder.decode(salt);
-            byte[] testHash = pbkdf2(givenPassword.toCharArray(), saltByte, PBKDF2_ITERATIONS, hashByte.length);
-            return slowEquals(hashByte, testHash);
+            byte[] testHash = pbkdf2(givenPassword.toCharArray(), salt, PBKDF2_ITERATIONS, hash.length);
+            return slowEquals(hash, testHash);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             return false;
         }
@@ -80,34 +82,26 @@ public class Authenticator {
     }
 
     public byte[] createHash(String password, byte[] salt) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] hash = pbkdf2(password.toCharArray(), salt, PBKDF2_ITERATIONS, HASH_BYTES);
-        return hash;
+        return pbkdf2(password.toCharArray(), salt, PBKDF2_ITERATIONS, HASH_BYTES);
+    }
+
+    public String createHashString(String password, byte[] salt) throws InvalidKeySpecException, NoSuchAlgorithmException {
+        return new String(Base64.getEncoder().encode(createHash(password, salt)), StandardCharsets.UTF_8);
     }
 
     public byte[] createSalt() {
-        byte[] salt = new byte[32];
-        secureRandom.nextBytes(salt);
-        return salt;
+        return RandomUtil.nextBytes(32);
     }
 
-    /**
-     * @param src
-     * @return
-     * @throws UnsupportedEncodingException
-     * @Description first encode byte to base64 encoded byte,second convert to
-     * string with default charset
-     */
-    public String byteToBase64String(byte[] src) throws UnsupportedEncodingException {
-        return new String(Base64.getEncoder().encode(src), CHARSET);
+    public String createSaltSting() {
+        return new String(Base64.getEncoder().encode(RandomUtil.nextBytes(32)), StandardCharsets.UTF_8);
     }
 
     public static void main(String[] arg) throws NoSuchAlgorithmException, InvalidKeySpecException, UnsupportedEncodingException {
         Authenticator a = new Authenticator();
         byte[] salt = a.createSalt();
         byte[] hash = a.createHash("123456", salt);
-        boolean b = a.validate("123456", a.byteToBase64String(hash), a.byteToBase64String(salt));
+        boolean b = a.validate("123456", hash, salt);
         System.out.println(b);
-        System.out.println(a.byteToBase64String(hash));
-        System.out.println(a.byteToBase64String(salt));
     }
 }
