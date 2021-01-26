@@ -95,7 +95,7 @@ public final class HttpClientUtil {
             for (Map.Entry<String, String> entry : params.entrySet()) {
                 uriBuilder.addParameter(entry.getKey(), entry.getValue());
             }
-            String path = uriBuilder.build().getPath();
+            String path = uriBuilder.build().toString();
             log.debug(path);
             return path;
         } catch (URISyntaxException e) {
