@@ -1,12 +1,10 @@
 package com.xjbg.java.sdk.util;
 
 import com.esotericsoftware.reflectasm.MethodAccess;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.xjbg.java.sdk.cache.LocalCacheHelper;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nonnull;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -22,23 +20,11 @@ public final class ReflectionUtil {
     /**
      * could not be modify
      */
-    private final static LoadingCache<Class<?>, Field[]> CACHE_FIELD = CacheBuilder.newBuilder().softValues().maximumSize(100)
-            .expireAfterWrite(1, TimeUnit.DAYS).build(new CacheLoader<Class<?>, Field[]>() {
-                @Override
-                public Field[] load(@Nonnull Class<?> clazz) throws Exception {
-                    return clazz.getDeclaredFields();
-                }
-            });
+    private final static LoadingCache<Class<?>, Field[]> CACHE_FIELD = LocalCacheHelper.buildCache(100, 1, TimeUnit.DAYS, Class::getDeclaredFields);
     /**
      * could not be modify
      */
-    private final static LoadingCache<Class<?>, MethodAccess> CACHE_METHOD = CacheBuilder.newBuilder().softValues().maximumSize(100)
-            .expireAfterWrite(1, TimeUnit.DAYS).build(new CacheLoader<Class<?>, MethodAccess>() {
-                @Override
-                public MethodAccess load(@Nonnull Class<?> clazz) throws Exception {
-                    return MethodAccess.get(clazz);
-                }
-            });
+    private final static LoadingCache<Class<?>, MethodAccess> CACHE_METHOD = LocalCacheHelper.buildCache(100, 1, TimeUnit.DAYS, MethodAccess::get);
 
     public static <T> Field[] getField(Class<T> clazz) {
         try {
