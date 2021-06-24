@@ -24,6 +24,7 @@ import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -207,4 +208,19 @@ public final class HttpClientUtil {
         HttpGet httpGet = new HttpGet(buildUri(url, params));
         return execute(httpGet, headers, BYTE_RESPONSE_HANDLER);
     }
+
+    public static InputStream getStream(String url) throws IOException {
+        return getStream(url, Collections.emptyMap(), Collections.emptyMap());
+    }
+
+    public static InputStream getStream(String url, Map<String, String> headers, Map<String, String> params) throws IOException {
+        HttpGet httpGet = new HttpGet(buildUri(url, params));
+        if (CollectionUtil.isNotEmpty(headers)) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                httpGet.addHeader(entry.getKey(), entry.getValue());
+            }
+        }
+        return CLIENT.execute(httpGet).getEntity().getContent();
+    }
+
 }
