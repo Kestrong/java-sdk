@@ -35,7 +35,7 @@ public class LocalCacheHelper {
     }
 
     private static boolean cacheEnable() {
-        return Boolean.parseBoolean(System.getProperty("local.cache.enable", "false"));
+        return Boolean.parseBoolean(System.getProperty("local.cache.enable", "true"));
     }
 
     public static <K, V> LoadingCache<K, V> buildCache(Integer maxSize, Integer duration, TimeUnit timeUnit,
