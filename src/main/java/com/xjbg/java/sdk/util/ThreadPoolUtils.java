@@ -7,30 +7,50 @@ import java.util.concurrent.*;
  * @time: 2017-12-19 20:05
  */
 public class ThreadPoolUtils {
-    private static final ThreadPoolExecutor POOL = create(8);
-    private static final ScheduledThreadPoolExecutor SCHEDULED_POOL = createScheduledPool(8);
+    private static final ThreadPoolExecutor POOL = create();
+    private static final ScheduledThreadPoolExecutor SCHEDULED_POOL = createScheduledPool(Runtime.getRuntime().availableProcessors() * 2);
 
-    public static ThreadPoolExecutor create(int size) {
-        return create(size, 1000);
+    static {
+        POOL.allowCoreThreadTimeOut(true);
     }
 
-    public static ThreadPoolExecutor create(int size, int queueSize) {
-        return create(size, queueSize, Executors.defaultThreadFactory(), new ThreadPoolExecutor.CallerRunsPolicy());
+    public static ThreadPoolExecutor create() {
+        return create(Runtime.getRuntime().availableProcessors() * 2);
     }
 
-    public static ThreadPoolExecutor create(int size,
+    public static ThreadPoolExecutor create(int coreSize) {
+        return create(coreSize, coreSize * 2);
+    }
+
+    public static ThreadPoolExecutor create(int coreSize, int maxSize) {
+        return create(coreSize, maxSize, 1000);
+    }
+
+    public static ThreadPoolExecutor create(int coreSize, int maxSize, int queueSize) {
+        return create(coreSize, maxSize, queueSize, Executors.defaultThreadFactory(), new ThreadPoolExecutor.CallerRunsPolicy());
+    }
+
+    public static ThreadPoolExecutor create(int coreSize, int maxSize,
                                             int queueSize,
                                             RejectedExecutionHandler rejectedExecutionHandler) {
-        return create(size, queueSize, Executors.defaultThreadFactory(), rejectedExecutionHandler);
+        return create(coreSize, maxSize, queueSize, Executors.defaultThreadFactory(), rejectedExecutionHandler);
     }
 
-    public static ThreadPoolExecutor create(int size,
+    public static ThreadPoolExecutor create(int coreSize, int maxSize,
                                             int queueSize,
                                             ThreadFactory threadFactory,
                                             RejectedExecutionHandler rejectedExecutionHandler) {
-        return new ThreadPoolExecutor(Math.min(size, Runtime.getRuntime().availableProcessors()),
-                Math.max(size * 2, Runtime.getRuntime().availableProcessors()),
-                120L, TimeUnit.SECONDS,
+        return create(coreSize, maxSize, queueSize, 300L, TimeUnit.SECONDS, threadFactory, rejectedExecutionHandler);
+    }
+
+    public static ThreadPoolExecutor create(int coreSize, int maxSize,
+                                            int queueSize,
+                                            long keepAliveTime, TimeUnit keepAliveTimeUnit,
+                                            ThreadFactory threadFactory,
+                                            RejectedExecutionHandler rejectedExecutionHandler) {
+        return new ThreadPoolExecutor(coreSize,
+                maxSize,
+                keepAliveTime, keepAliveTimeUnit,
                 new LinkedBlockingQueue<>(queueSize),
                 threadFactory,
                 rejectedExecutionHandler);

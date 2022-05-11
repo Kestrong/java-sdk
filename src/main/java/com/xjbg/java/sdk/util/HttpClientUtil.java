@@ -13,6 +13,8 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.ConnectionKeepAliveStrategy;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.AbstractResponseHandler;
 import org.apache.http.impl.client.BasicResponseHandler;
@@ -21,8 +23,10 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeaderElementIterator;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
+import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -48,11 +52,26 @@ public final class HttpClientUtil {
         }
     };
 
+    private static SSLConnectionSocketFactory sslConnectionSocketFactory() {
+        try {
+            TrustStrategy acceptingTrustStrategy = (x509Certificates, s) -> true;
+            SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
+            return new SSLConnectionSocketFactory(sslContext, (hostname, session) -> true);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
+
     public static HttpClient create(int maxTotal, int maxPerRoute) {
         return create(maxTotal, maxPerRoute, 5000);
     }
 
     public static HttpClient create(int maxTotal, int maxPerRoute, int timeout) {
+        return create(maxTotal, maxPerRoute, timeout, sslConnectionSocketFactory());
+    }
+
+    public static HttpClient create(int maxTotal, int maxPerRoute, int timeout, SSLConnectionSocketFactory sslConnectionSocketFactory) {
         ConnectionKeepAliveStrategy myStrategy = (response, context) -> {
             HeaderElementIterator it = new BasicHeaderElementIterator
                     (response.headerIterator(HTTP.CONN_KEEP_ALIVE));
@@ -69,8 +88,9 @@ public final class HttpClientUtil {
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
         connectionManager.setMaxTotal(Math.max(maxTotal, 10));
         connectionManager.setDefaultMaxPerRoute(Math.max(maxPerRoute, 5));
-        connectionManager.setValidateAfterInactivity(120 * 1000);
+        connectionManager.setValidateAfterInactivity(300 * 1000);
         return HttpClients.custom()
+                .setSSLSocketFactory(sslConnectionSocketFactory)
                 .setConnectionManager(connectionManager)
                 .setKeepAliveStrategy(myStrategy)
                 .setDefaultRequestConfig(RequestConfig.custom().setConnectionRequestTimeout(timeout).setSocketTimeout(timeout).setConnectTimeout(timeout).build())
