@@ -1,5 +1,8 @@
 package com.xjbg.java.sdk.util;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 /**
  * @author kesc
  * @date 2017年5月31日 上午11:57:17
@@ -29,22 +32,22 @@ public class SnowFlake {
     /**
      * 机器id所占的位数
      */
-    private final long workerIdBits = 5L;
+    private static final long workerIdBits = 5L;
 
     /**
      * 数据标识id所占的位数
      */
-    private final long datacenterIdBits = 5L;
+    private static final long datacenterIdBits = 5L;
 
     /**
      * 支持的最大机器id，结果是31 (这个移位算法可以很快的计算出几位二进制数所能表示的最大十进制数)
      */
-    private final long maxWorkerId = ~(-1L << workerIdBits);
+    private static final long maxWorkerId = ~(-1L << workerIdBits);
 
     /**
      * 支持的最大数据标识id，结果是31
      */
-    private final long maxDatacenterId = ~(-1L << datacenterIdBits);
+    private static final long maxDatacenterId = ~(-1L << datacenterIdBits);
 
     /**
      * 序列在id中占的位数
@@ -91,6 +94,10 @@ public class SnowFlake {
      */
     private long lastTimestamp = -1L;
 
+    public SnowFlake() {
+        this(generateWorkerId(), generateDataCenterId());
+    }
+
     /**
      * 构造函数
      *
@@ -108,6 +115,32 @@ public class SnowFlake {
         }
         this.workerId = workerId;
         this.datacenterId = datacenterId;
+    }
+
+    private static long mod(byte[] bytes, long max) {
+        int count = 0;
+        for (byte b : bytes) {
+            count += b;
+        }
+        return Math.abs(count % (max + 1));
+    }
+
+    private static long generateWorkerId() {
+        try {
+            byte[] bytes = InetAddress.getLocalHost().getHostName().getBytes();
+            return mod(bytes, maxWorkerId);
+        } catch (UnknownHostException e) {
+            return RandomUtil.nextLong(0, maxWorkerId + 1);
+        }
+    }
+
+    private static long generateDataCenterId() {
+        try {
+            byte[] bytes = InetAddress.getLocalHost().getAddress();
+            return mod(bytes, maxDatacenterId);
+        } catch (UnknownHostException e) {
+            return RandomUtil.nextLong(0, maxDatacenterId + 1);
+        }
     }
 
     /**

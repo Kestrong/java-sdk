@@ -220,12 +220,16 @@ public final class CollectionUtil extends CollectionUtils {
     }
 
     public static <K, E> Map<K, E> toMap(Collection<E> elements, Function<E, K> keyBuilder) {
-        if (isEmpty(elements) || keyBuilder == null) {
+        return toMap(elements, keyBuilder, Function.identity());
+    }
+
+    public static <E, K, V> Map<K, V> toMap(Collection<E> elements, Function<E, K> keyBuilder, Function<E, V> valueFunc) {
+        if (isEmpty(elements) || keyBuilder == null || valueFunc == null) {
             return Collections.emptyMap();
         }
-        Map<K, E> result = new HashMap<>(elements.size() * 3 / 2);
+        Map<K, V> result = new HashMap<>(elements.size() * 3 / 2);
         for (E element : elements) {
-            result.put(keyBuilder.apply(element), element);
+            result.put(keyBuilder.apply(element), valueFunc.apply(element));
         }
         return result;
     }

@@ -1,4 +1,4 @@
-package com.xjbg.java.sdk.util;
+package com.xjbg.java.sdk.encrypt;
 
 import org.apache.commons.codec.digest.DigestUtils;
 

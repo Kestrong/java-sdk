@@ -9,19 +9,14 @@ import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType;
 import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 
 /**
- * 拼音工具类
- * 作者: 李剑洪
- * 时间: 17/7/7
+ * @author kesc
+ * @since 2023-11-06 10:48
  */
 @Slf4j
+@SuppressWarnings("unused")
 public class PinYinUtil {
-    /**
-     * 将字符串中的中文转化为拼音,其他字符不变
-     *
-     * @param inputString
-     * @return
-     */
-    public static String getPinYin(String inputString) {
+
+    public static String getPinYin(String inputString) throws BadHanyuPinyinOutputFormatCombination {
         HanyuPinyinOutputFormat format = new HanyuPinyinOutputFormat();
         format.setCaseType(HanyuPinyinCaseType.LOWERCASE);
         format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
@@ -30,73 +25,50 @@ public class PinYinUtil {
         char[] input = inputString.trim().toCharArray();
         StringBuilder output = new StringBuilder();
 
-        try {
-            for (char anInput : input) {
-                if (Character.toString(anInput).matches("[\\u4E00-\\u9FA5]+")) {
-                    String[] temp = PinyinHelper.toHanyuPinyinStringArray(anInput, format);
-                    output.append(temp[0]);
-                } else {
-                    output.append(anInput);
-                }
+        for (char anInput : input) {
+            if (Character.toString(anInput).matches("[\\u4E00-\\u9FA5]+")) {
+                String[] temp = PinyinHelper.toHanyuPinyinStringArray(anInput, format);
+                output.append(temp[0]);
+            } else {
+                output.append(anInput);
             }
-        } catch (BadHanyuPinyinOutputFormatCombination e) {
-            log.error(e.getMessage(), e);
         }
         return output.toString();
     }
 
-    /**
-     * 获取汉字串拼音首字母，英文字符不变
-     *
-     * @param chinese 汉字串
-     * @return 汉语拼音首字母
-     */
-    public static String getFirstSpell(String chinese) {
-        StringBuffer pybf = new StringBuffer();
+    public static String getFirstSpell(String chinese) throws BadHanyuPinyinOutputFormatCombination {
+        StringBuilder sb = new StringBuilder();
         char[] arr = chinese.toCharArray();
         HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
         defaultFormat.setCaseType(HanyuPinyinCaseType.UPPERCASE);
         defaultFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
         for (char anArr : arr) {
             if (anArr > 128) {
-                try {
-                    String[] temp = PinyinHelper.toHanyuPinyinStringArray(anArr, defaultFormat);
-                    if (temp != null && temp.length > 0) {
-                        pybf.append(temp[0].charAt(0));
-                    }
-                } catch (BadHanyuPinyinOutputFormatCombination e) {
-                    e.printStackTrace();
+                String[] temp = PinyinHelper.toHanyuPinyinStringArray(anArr, defaultFormat);
+                if (temp != null && temp.length > 0) {
+                    sb.append(temp[0].charAt(0));
                 }
             } else {
-                pybf.append(anArr);
+                sb.append(anArr);
             }
         }
-        return pybf.toString().replaceAll("\\W", "").trim();
+        return sb.toString().replaceAll("\\W", "").trim();
     }
 
-    /**
-     * 获取汉字串拼音，英文字符不变
-     *
-     * @param chinese 汉字串
-     * @return 汉语拼音
-     */
-    public static String getFullSpell(String chinese) {
-        StringBuffer pybf = new StringBuffer();
+    public static String getFullSpell(String chinese) throws BadHanyuPinyinOutputFormatCombination {
+        StringBuilder sb = new StringBuilder();
         char[] arr = chinese.toCharArray();
         HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
         defaultFormat.setCaseType(HanyuPinyinCaseType.LOWERCASE);
         defaultFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
         for (char anArr : arr) {
             if (anArr > 128) {
-                try {
-                    pybf.append(PinyinHelper.toHanyuPinyinStringArray(anArr, defaultFormat)[0]);
-                } catch (BadHanyuPinyinOutputFormatCombination e) {
-                    e.printStackTrace();
-                }
+                sb.append(PinyinHelper.toHanyuPinyinStringArray(anArr, defaultFormat)[0]);
             } else {
-                pybf.append(anArr);
+                sb.append(anArr);
             }
         }
-        return pybf.toString();
+        return sb.toString();
     }
+
 }

@@ -18,32 +18,45 @@ public final class JsonUtil {
     private static volatile ObjectMapper OBJECT_MAPPER;
 
     public static void setObjectMapper(ObjectMapper objectMapper) {
-        if (OBJECT_MAPPER == null) {
-            synchronized (JsonUtil.class) {
-                if (OBJECT_MAPPER == null) {
-                    OBJECT_MAPPER = objectMapper;
-                }
-            }
-        }
+        OBJECT_MAPPER = objectMapper;
     }
 
-    public static ObjectMapper getObjectMapper() {
+    private static ObjectMapper getObjectMapper() {
         return OBJECT_MAPPER == null ? DEFAULT_OBJECT_MAPPER : OBJECT_MAPPER;
     }
 
-    public static <T> String toJsonString(T source) {
+    private static <T> String toJsonString(T source, boolean pretty) {
         try {
+            if (source == null) {
+                return null;
+            }
             if (source instanceof String) {
                 return (String) source;
             }
-            return getObjectMapper().writeValueAsString(source);
+            ObjectMapper objectMapper = getObjectMapper();
+            if (pretty) {
+                return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(source);
+            }
+            return objectMapper.writeValueAsString(source);
         } catch (Exception var3) {
             throw new RuntimeException(var3);
         }
     }
 
+    public static <T> String toJsonString(T source) {
+        return toJsonString(source, Boolean.FALSE);
+    }
+
+    public static <T> String toJsonStringPretty(T source) {
+        return toJsonString(source, Boolean.TRUE);
+    }
+
+    @SuppressWarnings("unchecked")
     public static <T> T toObject(String source, Class<T> clazz) {
         try {
+            if (source == null) {
+                return null;
+            }
             if (clazz.isAssignableFrom(String.class)) {
                 return (T) source;
             }
@@ -53,80 +66,61 @@ public final class JsonUtil {
         }
     }
 
-    /**
-     * deserialize string to object with generic type
-     *
-     * @param source         json string
-     * @param clazz          object class
-     * @param parametricType generic type
-     * @return T<P>
-     */
-    public static <T, P> T toObject(String source, Class<T> clazz, Class<P> parametricType) {
+    public static <T> T toObject(String source, Class<T> clazz, Class<?>... parametricType) {
         try {
-            ObjectMapper objectMapper = getObjectMapper();
-            JavaType javaType = objectMapper.getTypeFactory().constructParametricType(clazz, parametricType);
-            return objectMapper.readValue(source, javaType);
+            if (source == null) {
+                return null;
+            }
+            JavaType javaType = getObjectMapper().getTypeFactory().constructParametricType(clazz, parametricType);
+            return getObjectMapper().readValue(source, javaType);
         } catch (Exception var4) {
             throw new RuntimeException(var4);
         }
     }
-
-    /**
-     * deserialize string to object with list generic type
-     *
-     * @param source         json string
-     * @param clazz          object class
-     * @param parametricType generic type
-     * @return like T<List<P>>
-     */
-    public static <T, P> T toObjectCollection(String source, Class<T> clazz, Class<P> parametricType) {
-        try {
-            ObjectMapper objectMapper = getObjectMapper();
-            JavaType javaType = objectMapper.getTypeFactory().constructCollectionType(List.class, parametricType);
-            JavaType type = objectMapper.getTypeFactory().constructParametricType(clazz, javaType);
-            return objectMapper.readValue(source, type);
-        } catch (Exception var4) {
-            throw new RuntimeException(var4);
-        }
-    }
-
 
     public static <T> List<T> toList(String source, Class<T> tClass) {
         try {
-            ObjectMapper objectMapper = getObjectMapper();
-            JavaType javaType = objectMapper.getTypeFactory().constructCollectionLikeType(List.class, tClass);
-            return objectMapper.readValue(source, javaType);
+            if (source == null) {
+                return null;
+            }
+            JavaType javaType = getObjectMapper().getTypeFactory().constructCollectionLikeType(List.class, tClass);
+            return getObjectMapper().readValue(source, javaType);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static <T, P> List<T> toList(String source, Class<T> valueType, Class<P> valueParametricType) {
+    public static <T> List<T> toList(String source, Class<T> valueType, Class<?>... valueParametricType) {
         try {
-            ObjectMapper objectMapper = getObjectMapper();
-            JavaType elementType = objectMapper.getTypeFactory().constructParametricType(valueType, valueParametricType);
-            JavaType listType = objectMapper.getTypeFactory().constructCollectionType(List.class, elementType);
-            return objectMapper.readValue(source, listType);
+            if (source == null) {
+                return null;
+            }
+            JavaType elementType = getObjectMapper().getTypeFactory().constructParametricType(valueType, valueParametricType);
+            JavaType listType = getObjectMapper().getTypeFactory().constructCollectionType(List.class, elementType);
+            return getObjectMapper().readValue(source, listType);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static <V> Map<String, V> toMap(String json, Class<V> valueClazz) {
-        return toMap(json, String.class, valueClazz);
+    public static <V> Map<String, V> toMap(String source, Class<V> valueClazz) {
+        return toMap(source, String.class, valueClazz);
     }
 
-    public static Map<Object, Object> toMap(String json) {
-        return toMap(json, Object.class, Object.class);
+    public static Map<Object, Object> toMap(String source) {
+        return toMap(source, Object.class, Object.class);
     }
 
-    public static <K, T> Map<K, T> toMap(String json, Class<K> keyType, Class<T> valueType) {
+    public static <K, T> Map<K, T> toMap(String source, Class<K> keyType, Class<T> valueType) {
         try {
-            ObjectMapper objectMapper = getObjectMapper();
-            JavaType javaType = objectMapper.getTypeFactory().constructMapLikeType(Map.class, keyType, valueType);
-            return objectMapper.readValue(json, javaType);
+            if (source == null) {
+                return null;
+            }
+            JavaType javaType = getObjectMapper().getTypeFactory().constructMapLikeType(Map.class, keyType, valueType);
+            return getObjectMapper().readValue(source, javaType);
         } catch (IOException var5) {
             throw new RuntimeException(var5);
         }
     }
+
 }

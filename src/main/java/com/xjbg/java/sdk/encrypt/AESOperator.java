@@ -1,5 +1,7 @@
-package com.xjbg.java.sdk.util;
+package com.xjbg.java.sdk.encrypt;
 
+import com.xjbg.java.sdk.util.RandomUtil;
+import com.xjbg.java.sdk.util.StringUtil;
 import lombok.SneakyThrows;
 
 import javax.crypto.BadPaddingException;

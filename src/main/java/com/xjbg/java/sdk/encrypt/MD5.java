@@ -1,5 +1,6 @@
-package com.xjbg.java.sdk.util;
+package com.xjbg.java.sdk.encrypt;
 
+import com.xjbg.java.sdk.util.HexUtil;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.digest.MessageDigestAlgorithms;
 
@@ -17,10 +18,6 @@ import java.security.MessageDigest;
  * @date 2016年10月1日 下午2:58:49
  */
 public class MD5 {
-    /**
-     * 用来将字节转换成 16 进制表示的字符
-     */
-    private static final char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
     private static volatile MD5 instance = null;
 
     private MD5() {
@@ -36,20 +33,6 @@ public class MD5 {
             }
         }
         return instance;
-    }
-
-    private String toHex(byte[] input) {
-        char[] str = new char[16 * 2];
-        byte temp;
-        int k = 0;
-        for (int i = 0; i < 16; i++) {
-            temp = input[i];
-            // 取字节中高 4 位的数字转换 >>>为逻辑右移，将符号位一起右移
-            str[k++] = HEX_DIGITS[temp >>> 4 & 0xf];
-            // 取字节中低 4位的数字转换
-            str[k++] = HEX_DIGITS[temp & 0xf];
-        }
-        return new String(str);
     }
 
     @SneakyThrows
@@ -82,7 +65,7 @@ public class MD5 {
     }
 
     public String md5hex(final byte[] original) {
-        return toHex(md5(original));
+        return HexUtil.bytes2HexLower(md5(original));
     }
 
 
@@ -120,7 +103,7 @@ public class MD5 {
         if (bytes == null) {
             return null;
         }
-        return toHex(bytes);
+        return HexUtil.bytes2HexLower(bytes);
     }
 
 }

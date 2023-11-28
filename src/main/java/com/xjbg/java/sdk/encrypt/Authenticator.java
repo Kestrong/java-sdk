@@ -1,4 +1,6 @@
-package com.xjbg.java.sdk.util;
+package com.xjbg.java.sdk.encrypt;
+
+import com.xjbg.java.sdk.util.RandomUtil;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
